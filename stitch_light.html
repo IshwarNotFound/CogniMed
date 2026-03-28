@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MEDASSIST.AI | SOVEREIGN DIAGNOSTIC</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed": "#ffbdf3",
+                        "primary": "#00666d",
+                        "surface-container-low": "#f0f1f1",
+                        "surface-variant": "#dbdddd",
+                        "primary-dim": "#00595f",
+                        "error-dim": "#9f0519",
+                        "error-container": "#fb5151",
+                        "surface-bright": "#f6f6f6",
+                        "on-secondary-container": "#820082",
+                        "inverse-surface": "#0c0f0f",
+                        "primary-fixed": "#00eefc",
+                        "surface": "#f6f6f6",
+                        "outline-variant": "#acadad",
+                        "on-primary-fixed": "#003f43",
+                        "on-tertiary": "#e1ff88",
+                        "surface-container-highest": "#dbdddd",
+                        "on-error": "#ffefee",
+                        "tertiary-fixed": "#cafd00",
+                        "on-surface": "#2d2f2f",
+                        "tertiary-container": "#cafd00",
+                        "on-primary-container": "#005359",
+                        "tertiary-fixed-dim": "#beee00",
+                        "primary-fixed-dim": "#00deec",
+                        "background": "#f6f6f6",
+                        "secondary": "#a400a4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#5a5c5c",
+                        "on-secondary-fixed": "#620061",
+                        "tertiary": "#4e6300",
+                        "inverse-primary": "#00eefc",
+                        "error": "#b31b25",
+                        "on-tertiary-fixed-variant": "#526900",
+                        "surface-tint": "#00666d",
+                        "on-error-container": "#570008",
+                        "inverse-on-surface": "#9c9d9d",
+                        "secondary-fixed-dim": "#ffa6f3",
+                        "on-primary": "#cffbff",
+                        "surface-container-high": "#e1e3e3",
+                        "on-tertiary-container": "#4a5e00",
+                        "surface-dim": "#d3d5d5",
+                        "on-primary-fixed-variant": "#005e64",
+                        "tertiary-dim": "#435600",
+                        "on-secondary": "#ffeef8",
+                        "on-secondary-fixed-variant": "#920091",
+                        "on-tertiary-fixed": "#3a4a00",
+                        "surface-container": "#e7e8e8",
+                        "on-background": "#2d2f2f",
+                        "outline": "#767777",
+                        "secondary-dim": "#900090",
+                        "primary-container": "#00eefc",
+                        "secondary-container": "#ffbdf3"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .neo-brutal-shadow { box-shadow: 8px 8px 0px 0px #2d2f2f; }
+        .neo-brutal-shadow-sm { box-shadow: 4px 4px 0px 0px #2d2f2f; }
+        .neo-brutal-shadow-active { box-shadow: 0px 0px 0px 0px #2d2f2f; transform: translate(4px, 4px); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d2f2f; border: 2px solid #f6f6f6; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 z-50 flex justify-between items-center w-full px-6 border-b-4 border-zinc-900 dark:border-zinc-800">
+<div class="flex items-center gap-4">
+<span class="text-2xl font-black text-zinc-900 dark:text-white uppercase font-['Space_Grotesk'] tracking-tighter">MEDASSIST.AI</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-4 font-['Space_Grotesk'] font-bold uppercase text-sm">
+<a class="text-cyan-500 font-black" href="#">AI Analysis</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:bg-cyan-400 hover:text-black transition-colors duration-100 px-2" href="#">Records</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:bg-cyan-400 hover:text-black transition-colors duration-100 px-2" href="#">Archive</a>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-1 border-2 border-zinc-900 px-2 py-1 font-headline font-black text-xs uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined text-sm">contrast</span>
+<span class="hidden sm:inline">Theme</span>
+</button>
+<button class="material-symbols-outlined p-1 hover:bg-cyan-400 hover:text-black transition-colors">account_circle</button>
+<button class="material-symbols-outlined p-1 hover:bg-cyan-400 hover:text-black transition-colors">settings</button>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-zinc-950 border-r-4 border-zinc-900 flex flex-col p-4 z-40">
+<div class="mb-8">
+<span class="text-xl font-black border-b-4 border-zinc-900 pb-2 mb-1 block font-['Space_Grotesk']">CLINICAL RADICALISM</span>
+<span class="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">SOVEREIGN DIAGNOSTIC V1.0</span>
+</div>
+<!-- System Stats Monitor -->
+<div class="flex-1 space-y-6">
+<div class="border-4 border-zinc-900 p-4 bg-zinc-50 dark:bg-zinc-900 neo-brutal-shadow-sm">
+<div class="flex items-center gap-2 mb-4 border-b-2 border-zinc-900 pb-2">
+<span class="material-symbols-outlined text-cyan-500 font-bold">memory</span>
+<span class="font-headline font-black text-xs uppercase tracking-tighter">GPU MONITOR</span>
+</div>
+<div class="space-y-4">
+<div>
+<span class="block text-[10px] font-black text-zinc-400 uppercase mb-1">Device</span>
+<span class="block font-headline font-bold text-sm leading-tight">NVIDIA RTX 6000 ADA</span>
+</div>
+<div>
+<div class="flex justify-between text-[10px] font-black uppercase mb-1">
+<span>VRAM USAGE</span>
+<span>24GB / 48GB</span>
+</div>
+<div class="h-4 w-full bg-zinc-200 dark:bg-zinc-800 border-2 border-zinc-900 relative">
+<div class="absolute inset-0 bg-cyan-400 border-r-2 border-zinc-900" style="width: 50%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[10px] font-black uppercase mb-1">
+<span>COMPUTE LOAD</span>
+<span>82%</span>
+</div>
+<div class="h-4 w-full bg-zinc-200 dark:bg-zinc-800 border-2 border-zinc-900 relative">
+<div class="absolute inset-0 bg-secondary border-r-2 border-zinc-900" style="width: 82%"></div>
+</div>
+</div>
+<div class="bg-zinc-900 text-cyan-400 p-2 text-[10px] font-mono leading-none">
+                    &gt; CLUSTER_ID: OMEGA_01<br/>
+                    &gt; TEMP: 64°C<br/>
+                    &gt; STATUS: OPTIMAL
+                </div>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="text-zinc-600 dark:text-zinc-400 flex items-center px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-headline font-bold uppercase text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-sm">history</span> Session History
+            </a>
+<a class="text-zinc-600 dark:text-zinc-400 flex items-center px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-headline font-bold uppercase text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-sm">folder_open</span> Dataset Library
+            </a>
+</nav>
+</div>
+<div class="mt-auto border-t-4 border-zinc-900 pt-4 space-y-1">
+<button class="w-full bg-secondary text-white border-2 border-zinc-900 py-3 mb-4 font-black tracking-tighter hover:shadow-none translate-x-1 translate-y-1 transition-all">EMERGENCY OVERRIDE</button>
+<a class="text-zinc-600 flex items-center px-4 py-1 text-sm font-bold uppercase" href="#">
+<span class="material-symbols-outlined mr-2 text-base">help</span> Support
+        </a>
+<a class="text-zinc-600 flex items-center px-4 py-1 text-sm font-bold uppercase" href="#">
+<span class="material-symbols-outlined mr-2 text-base">sensors</span> System Status
+        </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 p-8 bg-surface min-h-screen">
+<div class="max-w-7xl mx-auto grid grid-cols-12 gap-8">
+<!-- Header Section -->
+<div class="col-span-12 flex justify-between items-end mb-4">
+<div>
+<h1 class="text-5xl font-black font-headline uppercase leading-none mb-2">Patient Analysis</h1>
+<div class="flex gap-4 items-center">
+<span class="bg-zinc-900 text-white px-3 py-1 text-xs font-bold uppercase tracking-widest">Case ID: 4882-QX</span>
+<span class="text-zinc-500 font-bold uppercase text-xs">Priority: High Alpha</span>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="bg-surface-container-lowest border-4 border-on-surface px-6 py-3 font-headline font-bold uppercase neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">Export Report</button>
+<button class="bg-primary-container border-4 border-on-surface px-6 py-3 font-headline font-bold uppercase neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">New Diagnostic</button>
+</div>
+</div>
+<!-- Left Column: Data Ingestion -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Drop Zone -->
+<div class="border-4 border-dashed border-zinc-400 p-8 text-center bg-zinc-50 hover:bg-cyan-50 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-5xl mb-4 group-hover:text-cyan-500 transition-colors">picture_as_pdf</span>
+<h3 class="font-headline font-black text-xl uppercase mb-2">Ingest Medical Data</h3>
+<p class="text-sm font-bold text-zinc-500 uppercase">Drop PDF, DICOM, or Lab Reports here</p>
+<div class="mt-6 flex justify-center">
+<span class="bg-on-surface text-surface px-4 py-2 font-black text-xs uppercase tracking-tighter">Maximum size 50MB</span>
+</div>
+</div>
+<!-- Enhanced Suggestion Cards -->
+<div class="space-y-4">
+<h3 class="font-headline font-black text-sm uppercase tracking-widest border-b-2 border-zinc-300 pb-2">SUGGESTED QUERIES</h3>
+<div class="grid gap-4">
+<button class="group relative bg-white border-4 border-zinc-900 p-4 text-left hover:translate-x-1 hover:translate-y-1 transition-all">
+<div class="absolute -right-1 -bottom-1 w-full h-full bg-cyan-400 -z-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-all"></div>
+<span class="material-symbols-outlined text-xl mb-2 block">biotech</span>
+<span class="font-headline font-black text-sm uppercase block">Analyze latest lab results</span>
+</button>
+<button class="group relative bg-white border-4 border-zinc-900 p-4 text-left hover:translate-x-1 hover:translate-y-1 transition-all">
+<div class="absolute -right-1 -bottom-1 w-full h-full bg-secondary-container -z-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-all"></div>
+<span class="material-symbols-outlined text-xl mb-2 block">vaccines</span>
+<span class="font-headline font-black text-sm uppercase block">Check for drug interactions</span>
+</button>
+<button class="group relative bg-white border-4 border-zinc-900 p-4 text-left hover:translate-x-1 hover:translate-y-1 transition-all">
+<div class="absolute -right-1 -bottom-1 w-full h-full bg-tertiary-container -z-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-all"></div>
+<span class="material-symbols-outlined text-xl mb-2 block">summarize</span>
+<span class="font-headline font-black text-sm uppercase block">Summarize patient history</span>
+</button>
+<button class="group relative bg-white border-4 border-zinc-900 p-4 text-left hover:translate-x-1 hover:translate-y-1 transition-all">
+<div class="absolute -right-1 -bottom-1 w-full h-full bg-zinc-200 -z-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-all"></div>
+<span class="material-symbols-outlined text-xl mb-2 block">clinical_notes</span>
+<span class="font-headline font-black text-sm uppercase block">Review symptom drift</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Right Column: AI Conversation & Insights -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- AI Insight Banner -->
+<div class="bg-primary-container border-4 border-on-surface p-8 neo-brutal-shadow flex items-start gap-6">
+<div class="bg-on-surface p-3 text-primary-container">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div>
+<h3 class="text-3xl font-black font-headline uppercase leading-none mb-2">Neural Inference Active</h3>
+<p class="text-lg font-bold leading-tight">AI has detected a 89% correlation between recent symptoms and Type-II Respiratory Failure indicators. Immediate clinical review advised.</p>
+</div>
+</div>
+<!-- Conversation Thread -->
+<div class="space-y-8">
+<!-- User Message -->
+<div class="flex justify-end ml-12">
+<div class="bg-surface-container-lowest border-4 border-on-surface p-6 neo-brutal-shadow-sm max-w-2xl">
+<p class="font-bold text-lg">Compare current blood gas results with the baseline from three months ago. Identify any significant drift in pH or pCO2 levels.</p>
+<span class="block text-[10px] font-black uppercase text-zinc-400 mt-4">User Query | 11:20 AM</span>
+</div>
+</div>
+<!-- AI Response -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-start mr-12">
+<div class="bg-white border-4 border-on-surface p-8 neo-brutal-shadow max-w-3xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-2 h-full bg-cyan-400"></div>
+<div class="mb-6 flex justify-between items-center">
+<span class="bg-on-surface text-white px-3 py-1 text-xs font-black uppercase">MEDASSIST AI Core</span>
+<span class="text-zinc-400 material-symbols-outlined">verified</span>
+</div>
+<p class="text-xl font-headline font-bold mb-6 leading-relaxed">Analysis complete. There is a <span class="bg-cyan-400 px-1">documented drift</span> in respiratory compensation markers.</p>
+<!-- Data Table In-Conversation -->
+<div class="border-4 border-on-surface mb-6 overflow-hidden">
+<table class="w-full text-left font-headline">
+<thead class="bg-zinc-900 text-white">
+<tr>
+<th class="p-3 text-xs uppercase font-black">Marker</th>
+<th class="p-3 text-xs uppercase font-black">Baseline (July)</th>
+<th class="p-3 text-xs uppercase font-black">Current (Oct)</th>
+<th class="p-3 text-xs uppercase font-black">Variance</th>
+</tr>
+</thead>
+<tbody class="divide-y-2 divide-on-surface">
+<tr>
+<td class="p-3 font-bold text-sm">pH Level</td>
+<td class="p-3 font-bold text-sm">7.42</td>
+<td class="p-3 font-bold text-sm text-secondary">7.34</td>
+<td class="p-3 font-bold text-sm">-1.08%</td>
+</tr>
+<tr class="bg-zinc-50">
+<td class="p-3 font-bold text-sm">pCO2 (mmHg)</td>
+<td class="p-3 font-bold text-sm">40.1</td>
+<td class="p-3 font-bold text-sm text-secondary">48.2</td>
+<td class="p-3 font-bold text-sm">+20.2%</td>
+</tr>
+<tr>
+<td class="p-3 font-bold text-sm">HCO3-</td>
+<td class="p-3 font-bold text-sm">24.5</td>
+<td class="p-3 font-bold text-sm">26.1</td>
+<td class="p-3 font-bold text-sm">+6.5%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="font-bold text-zinc-700 mb-6">The increased pCO2 combined with a drop in pH suggests a shift toward respiratory acidosis. The slight rise in bicarbonate (HCO3-) indicates the renal system is beginning to compensate.</p>
+<!-- Citations -->
+<div class="flex flex-wrap gap-2">
+<div class="bg-surface-container border-2 border-zinc-900 px-3 py-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">link</span>
+<span class="text-[10px] font-black uppercase">JAMA Oncology Ref. 22B</span>
+</div>
+<div class="bg-surface-container border-2 border-zinc-900 px-3 py-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">link</span>
+<span class="text-[10px] font-black uppercase">Standard Lab 4992-X</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Performance Metrics Row -->
+<div class="flex justify-start gap-4 ml-2">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 text-white border-2 border-zinc-900 font-headline font-black text-[10px] uppercase">
+<span class="material-symbols-outlined text-xs text-cyan-400">timer</span>
+                            Inference Time: 420ms
+                        </div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 text-white border-2 border-zinc-900 font-headline font-black text-[10px] uppercase">
+<span class="material-symbols-outlined text-xs text-secondary-container">bolt</span>
+                            Tokens/sec: 85
+                        </div>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="sticky bottom-8 z-20">
+<div class="bg-white border-4 border-on-surface p-2 neo-brutal-shadow flex items-center gap-4">
+<button class="material-symbols-outlined p-4 text-zinc-400 hover:text-on-surface">attach_file</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 font-headline font-black text-xl placeholder-zinc-300 uppercase" placeholder="QUERY CLINICAL INTELLIGENCE..." type="text"/>
+<button class="bg-primary-container border-4 border-on-surface px-8 py-4 font-headline font-black uppercase flex items-center gap-2 hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                        Process <span class="material-symbols-outlined">bolt</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB -->
+<div class="fixed bottom-8 right-8 z-30">
+<button class="bg-tertiary-container border-4 border-on-surface w-16 h-16 flex items-center justify-center neo-brutal-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+</body></html>
