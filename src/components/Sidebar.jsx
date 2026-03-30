@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import SystemStats from './SystemStats';
 
 export default function Sidebar() {
@@ -7,15 +8,29 @@ export default function Sidebar() {
         <span className="text-xl font-black border-b-4 border-brand-border pb-2 mb-1 block font-headline uppercase text-brand-primary tracking-tighter">CLINICAL RADICALISM</span>
         <span className="text-[10px] font-bold text-brand-text-muted tracking-wide uppercase font-body opacity-80">SOVEREIGN DIAGNOSTIC V2.0</span>
       </div>
-      
+
       <div className="flex-1 w-full flex flex-col items-center">
         <div className="w-full mt-4">
           <SystemStats />
         </div>
       </div>
-      
+
       <div className="mt-auto border-t-4 border-brand-border pt-4 px-2 space-y-2">
-        <button className="w-full bg-brand-secondary text-black border-2 border-brand-border py-4 mb-4 font-black tracking-tighter hover:shadow-none shadow-[4px_4px_0_0_var(--brand-border)] active:translate-x-1 active:translate-y-1 transition-all uppercase font-headline">EMERGENCY OVERRIDE</button>
+        {/* EMERGENCY OVERRIDE — physical kill-switch clack */}
+        <motion.button
+          className="w-full bg-brand-secondary text-black border-2 border-brand-border py-4 mb-4 font-black tracking-tighter uppercase font-headline"
+          style={{ boxShadow: '4px 4px 0 0 var(--brand-border)' }}
+          whileTap={{
+            x: 4,
+            y: 4,
+            boxShadow: '0px 0px 0px 0px var(--brand-border)',
+            backgroundColor: ['var(--brand-secondary)', 'var(--brand-error)', 'var(--brand-secondary)'],
+            transition: { duration: 0.15, ease: 'linear' },
+          }}
+        >
+          EMERGENCY OVERRIDE
+        </motion.button>
+
         <div className="flex justify-between items-center w-full mt-4 pt-4 px-2 border-brand-border">
           <a className="text-brand-text-muted flex items-center text-[10px] font-bold uppercase hover:text-brand-primary transition-colors" href="#">
             <span className="material-symbols-outlined mr-1 text-sm">help</span> Support

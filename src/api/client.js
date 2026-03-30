@@ -34,18 +34,53 @@ export async function sendMessage(message, history, imageFile = null) {
   return response.json();
 }
 
-export async function uploadPDF(file) {
-  const formData = new FormData();
-  formData.append("file", file);
+/**
+ * Upload a PDF file using XMLHttpRequest so that real upload progress events
+ * are available for the terminal boot sequence in PDFUploader.
+ *
+ * @param {File} file - The PDF file to upload
+ * @param {function} onProgress - Called with (percent: number) as upload progresses
+ * @returns {Promise<object>} - Resolves with the server response JSON
+ */
+export function uploadPDF(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/upload-pdf`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: formData,
+    const xhr = new XMLHttpRequest();
+
+    // Real upload progress
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        onProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          reject(new Error("Invalid JSON response from server"));
+        }
+      } else {
+        reject(new Error(`PDF upload failed: ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("PDF upload network error"));
+    xhr.onabort = () => reject(new Error("PDF upload aborted"));
+
+    xhr.open("POST", `${API_BASE_URL}/upload-pdf`);
+
+    // Set custom headers (cannot set Content-Type manually with FormData — browser does it)
+    Object.entries(getHeaders()).forEach(([key, value]) => {
+      xhr.setRequestHeader(key, value);
+    });
+
+    xhr.send(formData);
   });
-
-  if (!response.ok) throw new Error("PDF upload failed");
-  return response.json();
 }
 
 export async function clearPDF() {
