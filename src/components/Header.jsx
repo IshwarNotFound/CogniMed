@@ -1,8 +1,23 @@
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSpring } from '../animations/physics';
 
 export default function Header({ isOnline, theme, setTheme }) {
   const spring = getSpring(theme);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const settingsRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target)) setShowSettings(false);
+      if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-brand-bg z-50 flex justify-between items-center w-full px-6 border-b-4 border-brand-border transition-colors">
@@ -64,8 +79,69 @@ export default function Header({ isOnline, theme, setTheme }) {
           </div>
 
           <div className="flex items-center gap-3 ml-2 border-l-2 border-brand-border pl-4 text-brand-text">
-            <button className="material-symbols-outlined p-1 hover:bg-brand-surface-high hover:text-brand-primary transition-colors">account_circle</button>
-            <button className="material-symbols-outlined p-1 hover:bg-brand-surface-high hover:text-brand-primary transition-colors">settings</button>
+            {/* Profile dropdown */}
+            <div ref={profileRef} className="relative">
+              <button
+                onClick={() => { setShowProfile(p => !p); setShowSettings(false); }}
+                className={`material-symbols-outlined p-1 transition-colors ${showProfile ? 'bg-brand-primary text-black' : 'hover:bg-brand-surface-high hover:text-brand-primary'}`}
+              >
+                account_circle
+              </button>
+              <AnimatePresence>
+                {showProfile && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-10 w-56 bg-brand-surface border-4 border-brand-border p-4 z-50 shadow-[6px_6px_0_0_var(--brand-border)]"
+                  >
+                    <div className="text-xs font-black uppercase tracking-widest text-brand-primary mb-3 border-b-2 border-brand-border pb-2">Session Profile</div>
+                    <div className="space-y-2 text-xs font-bold text-brand-text">
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Role</span><span>Clinician</span></div>
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Session</span><span>4882-QX</span></div>
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Auth</span><span className="text-brand-tertiary">LOCAL</span></div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Settings dropdown */}
+            <div ref={settingsRef} className="relative">
+              <button
+                onClick={() => { setShowSettings(s => !s); setShowProfile(false); }}
+                className={`material-symbols-outlined p-1 transition-colors ${showSettings ? 'bg-brand-primary text-black' : 'hover:bg-brand-surface-high hover:text-brand-primary'}`}
+              >
+                settings
+              </button>
+              <AnimatePresence>
+                {showSettings && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-10 w-60 bg-brand-surface border-4 border-brand-border p-4 z-50 shadow-[6px_6px_0_0_var(--brand-border)]"
+                  >
+                    <div className="text-xs font-black uppercase tracking-widest text-brand-primary mb-3 border-b-2 border-brand-border pb-2">System Config</div>
+                    <div className="space-y-2 text-xs font-bold text-brand-text">
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Version</span><span>v2.0.0</span></div>
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Model</span><span>MedGemma 4B-IT</span></div>
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Quantization</span><span>4-bit NF4</span></div>
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Vector Store</span><span>ChromaDB</span></div>
+                      <div className="flex justify-between"><span className="text-brand-text-muted">Embeddings</span><span>MiniLM-L6-v2</span></div>
+                    </div>
+                    <a
+                      href="mailto:support@cognimed.ai"
+                      className="block mt-3 pt-2 border-t-2 border-brand-border text-[10px] font-bold uppercase text-brand-text-muted hover:text-brand-primary transition-colors"
+                    >
+                      Contact Support →
+                    </a>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>

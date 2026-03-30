@@ -16,10 +16,22 @@ export default function InputBar({ onSend, disabled, theme }) {
 
   const handleSend = () => {
     if ((!input.trim() && !imageFile) || disabled) return;
-    onSend(input, imageFile, imagePreview);
+
+    // Item 5 — Memory Leak Prevention
+    // Capture snapshots BEFORE revoking so onSend receives valid references
+    const capturedFile = imageFile;
+    const capturedPreview = imagePreview;
+
+    // Immediately destroy the browser's temporary blob allocation
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+
+    // Reset local state
     setInput('');
     setImageFile(null);
     setImagePreview(null);
+
+    // Fire upward with captured snapshot — never with the stale state values
+    onSend(input, capturedFile, capturedPreview);
   };
 
   const handleKeyDown = (e) => {

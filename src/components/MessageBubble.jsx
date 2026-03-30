@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
+// Items 8, 11, 14 — MessageBubble
+// 8: MarkdownRenderer replaces raw text (XSS-safe AST parsing)
+// 11: Asymmetric visual hierarchy — heavy brand-secondary left border on user bubbles
+// 14: TypewriterText applied only to the latest AI message (non-blocking)
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { getSpring, DATA_REVEAL, FLASH } from '../animations/physics';
+import MarkdownRenderer from './MarkdownRenderer';
+import TypewriterText from './TypewriterText';
 
 /**
  * NumberTicker — isolated per-message number counter.
@@ -17,7 +23,9 @@ function NumberTicker({ value, decimals = 0, suffix = '' }) {
   }, [motionVal, decimals]);
 
   useEffect(() => {
-    const controls = animate(motionVal, value, {
+    // Item 6 — NaN guard: coerce bad values before animating
+    const safeValue = isNaN(Number(value)) ? 0 : Number(value);
+    const controls = animate(motionVal, safeValue, {
       duration: 1.2,
       ease: [0.16, 1, 0.3, 1],
     });
@@ -33,9 +41,17 @@ const citationVariants = {
   show: { opacity: 1, y: 0 },
 };
 
-export default function MessageBubble({ message, theme }) {
+/**
+ * @param {object} message
+ * @param {string} theme
+ * @param {boolean} isLatest — if true, AI content renders via TypewriterText
+ */
+export default function MessageBubble({ message, theme, isLatest = false }) {
   const isUser = message.role === 'user';
   const [showCitations, setShowCitations] = useState(false);
+  // Once TypewriterText finishes, switch to MarkdownRenderer so ** marks are parsed
+  const [typewriterDone, setTypewriterDone] = useState(!isLatest);
+  const handleTypewriterComplete = useCallback(() => setTypewriterDone(true), []);
   const spring = getSpring(theme);
 
   if (isUser) {
@@ -46,7 +62,8 @@ export default function MessageBubble({ message, theme }) {
         animate={{ opacity: 1, x: 0 }}
         transition={spring}
       >
-        <div className="bg-brand-surface-high border-4 border-brand-border p-6 shadow-[4px_4px_0_0_var(--brand-border)] max-w-2xl relative">
+        {/* Item 11 — Asymmetric Visual Hierarchy: heavy brand-secondary left accent */}
+        <div className="bg-brand-surface-high border-4 border-brand-border border-l-[6px] border-l-brand-secondary p-6 shadow-[4px_4px_0_0_var(--brand-border)] max-w-2xl relative">
           {message.imagePreview && (
             <div className="mb-4 bg-zinc-100 border-2 border-brand-border p-2">
               <img src={message.imagePreview} alt="Attached" className="max-w-[200px] h-auto border-2 border-brand-border" />
@@ -76,7 +93,7 @@ export default function MessageBubble({ message, theme }) {
             transition={DATA_REVEAL}
           />
         )}
-        {/* Dark theme — static accent bar (Text Strike handles the arrival) */}
+        {/* Dark theme — static accent bar */}
         {theme !== 'light' && (
           <div className="absolute top-0 left-0 w-2 h-full bg-brand-primary" />
         )}
@@ -86,21 +103,43 @@ export default function MessageBubble({ message, theme }) {
           <span className="text-brand-primary material-symbols-outlined">verified</span>
         </div>
 
-        {/* Text Strike — Dark theme only */}
+        {/* Item 8 — Secure AST Markdown Rendering (no dangerouslySetInnerHTML) */}
+        {/* Item 14 — TypewriterText only on the latest AI message.
+            Once typewriterDone=true (animation complete), switches to MarkdownRenderer
+            so '**bold**' markers are always properly parsed — never raw text. */}
         {theme === 'dark' ? (
           <motion.div
             initial={{ backgroundColor: 'var(--brand-primary)' }}
             animate={{ backgroundColor: 'transparent' }}
             transition={FLASH}
+            className="mb-6"
           >
-            <p className="font-bold text-brand-text mb-6 leading-relaxed whitespace-pre-wrap text-[17px]">
-              {message.content}
-            </p>
+            {isLatest && !typewriterDone ? (
+              <div className="font-bold text-brand-text leading-relaxed text-[17px]">
+                <TypewriterText
+                  text={message.content}
+                  speedMs={8}
+                  onComplete={handleTypewriterComplete}
+                />
+              </div>
+            ) : (
+              <MarkdownRenderer content={message.content} />
+            )}
           </motion.div>
         ) : (
-          <p className="font-bold text-brand-text mb-6 leading-relaxed whitespace-pre-wrap text-[17px]">
-            {message.content}
-          </p>
+          <div className="mb-6">
+            {isLatest && !typewriterDone ? (
+              <div className="font-bold text-brand-text leading-relaxed text-[17px]">
+                <TypewriterText
+                  text={message.content}
+                  speedMs={8}
+                  onComplete={handleTypewriterComplete}
+                />
+              </div>
+            ) : (
+              <MarkdownRenderer content={message.content} />
+            )}
+          </div>
         )}
 
         {/* Citations Accordion */}
@@ -123,7 +162,6 @@ export default function MessageBubble({ message, theme }) {
                   transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                   style={{ overflow: 'hidden' }}
                 >
-                  {/* padding inside animated container to avoid layout jump */}
                   <div className="pt-4 border-4 border-brand-border overflow-hidden">
                     <motion.table
                       className="w-full text-left font-headline"
