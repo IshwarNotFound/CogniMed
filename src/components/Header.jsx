@@ -36,8 +36,6 @@ export default function Header({ isOnline, theme, setTheme }) {
       <div className="flex items-center gap-6">
         <div className="hidden md:flex gap-4 font-headline font-bold uppercase text-sm">
           <span className="text-brand-primary font-black">AI Analysis</span>
-          <a className="text-brand-text-muted hover:bg-brand-primary hover:text-brand-bg transition-colors duration-100 px-2" href="#">Records</a>
-          <a className="text-brand-text-muted hover:bg-brand-primary hover:text-brand-bg transition-colors duration-100 px-2" href="#">Archive</a>
         </div>
 
         <div className="flex items-center gap-4">
