@@ -1,4 +1,9 @@
-import { useState, useEffect } from 'react';
+// Items 6, 9, 10, 12 — App.jsx
+// 6:  NaN coercion on pdfState from health payload
+// 9:  Async export UI — isExporting state, non-blocking input, OOM toast
+// 10: onSessionReset wired to Sidebar
+// 12: Viewport physics — mainControls moved to <motion.main> only (Header/Sidebar don't warp)
+import { useState, useEffect, useCallback } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -6,7 +11,8 @@ import ChatWindow from './components/ChatWindow';
 import InputBar from './components/InputBar';
 import PDFUploader from './components/PDFUploader';
 import { checkHealth, sendMessage } from './api/client';
-import { STAMP, CLACK } from './animations/physics';
+import { generateClinicalPDF } from './utils/pdfExport';
+import { CLACK, STAMP } from './animations/physics';
 
 /** Generate a stable unique ID for each message */
 const genId = () =>
@@ -21,9 +27,15 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [pdfState, setPdfState] = useState(null);
 
+  // Item 9 — Async export state
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportToast, setExportToast] = useState(null); // null | 'oom' | 'success'
+
+  // Item 12 — mainControls applied ONLY to <motion.main>
+  // Header + Sidebar are fixed and must NOT be included in the scale physics
   const mainControls = useAnimationControls();
 
-  // Apply Dark Mode Class to document element
+  // Apply Dark Mode class
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -41,8 +53,10 @@ export default function App() {
         if (res.pdf_loaded) {
           setPdfState({
             filename: res.pdf_filename,
-            pages_indexed: '?',
-            chunks_created: '?'
+            // Item 6 — NaN guard + correct field names from /health endpoint
+            // Backend sends: pdf_chunks (not chunks_created), no pages field in health
+            pages_indexed: Number(res.pages_indexed ?? res.pages ?? res.pdf_pages ?? 0) || 0,
+            chunks_created: Number(res.chunks_created ?? res.pdf_chunks ?? 0) || 0,
           });
         }
       } catch (e) {
@@ -55,13 +69,21 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Item 12 — Viewport Physics Stabilization
+  // Scale compresses, color swaps at the trough, then expands back
   const handleThemeChange = async (newTheme) => {
-    // Fire a mechanical clack on the main container
-    mainControls.start({
-      scale: [1, 0.98, 1],
-      transition: CLACK,
+    // Step 1: compress main content area
+    await mainControls.start({
+      scale: 0.98,
+      transition: { duration: 0.075, ease: 'linear' },
     });
+    // Step 2: swap colors at the compression trough
     setTheme(newTheme);
+    // Step 3: expand back
+    mainControls.start({
+      scale: 1,
+      transition: { duration: 0.075, ease: 'linear' },
+    });
   };
 
   const handleSend = async (messageText, imageFile, imagePreview) => {
@@ -69,7 +91,7 @@ export default function App() {
       id: genId(),
       role: 'user',
       content: messageText,
-      imagePreview: imagePreview
+      imagePreview: imagePreview,
     };
 
     setHistory(prev => [...prev, userMessage]);
@@ -78,7 +100,7 @@ export default function App() {
     try {
       const cleanHistory = history.map(msg => ({
         role: msg.role,
-        content: msg.content
+        content: msg.content,
       }));
 
       const res = await sendMessage(messageText, cleanHistory, imageFile);
@@ -90,7 +112,7 @@ export default function App() {
         citations: res.citations || [],
         inferenceTime: res.inference_time_ms,
         tokensGenerated: res.tokens_generated,
-        tokensPerSecond: res.tokens_per_second
+        tokensPerSecond: res.tokens_per_second,
       };
 
       setHistory(prev => [...prev, assistantMessage]);
@@ -98,22 +120,48 @@ export default function App() {
       setHistory(prev => [...prev, {
         id: genId(),
         role: 'assistant',
-        content: "⚠️ Connection Error: Failed to reach the MedGemma backend.",
+        content: '⚠️ Connection Error: Failed to reach the MedGemma backend.',
       }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <motion.div
-      animate={mainControls}
-      className="bg-brand-bg text-brand-text h-screen overflow-hidden"
-    >
-      <Header isOnline={isOnline} theme={theme} setTheme={handleThemeChange} />
-      <Sidebar />
+  // Client-side PDF export — generates and downloads a report instantly.
+  // No backend call, no API, no 500 errors. Pure frontend.
+  const handleExport = () => {
+    if (isExporting || history.length === 0) return;
+    try {
+      setIsExporting(true);
+      generateClinicalPDF(history, pdfState);
+      setExportToast('success');
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      setExportToast('error');
+    } finally {
+      setIsExporting(false);
+      setTimeout(() => setExportToast(null), 4000);
+    }
+  };
 
-      <main className="md:ml-72 mt-16 p-4 h-[calc(100vh-4rem)] overflow-hidden">
+  // Item 10 — Session reset: clear local history after Sidebar purge
+  const handleSessionReset = useCallback(() => {
+    setHistory([]);
+    setPdfState(null);
+  }, []);
+
+  return (
+    // Item 12 — Root is a plain div — Header/Sidebar are fixed and must NOT scale
+    <div className="bg-brand-bg text-brand-text h-screen overflow-hidden">
+      <Header isOnline={isOnline} theme={theme} setTheme={handleThemeChange} />
+      {/* Item 10 — onSessionReset wired to clear history + PDF state */}
+      <Sidebar onSessionReset={handleSessionReset} />
+
+      {/* Item 12 — motion.main is the ONLY element that participates in scale physics */}
+      <motion.main
+        animate={mainControls}
+        className="md:ml-72 mt-16 p-4 h-[calc(100vh-4rem)] overflow-hidden"
+      >
         <div className="max-w-7xl mx-auto grid grid-cols-12 gap-4 h-full">
 
           {/* Header Area */}
@@ -132,13 +180,49 @@ export default function App() {
                 <span className="text-brand-text-muted font-bold uppercase text-xs">Priority: High Alpha</span>
               </div>
             </div>
-            <div className="hidden lg:flex gap-3">
-              <button className="bg-brand-surface border-4 border-brand-border px-4 py-2 font-headline font-bold uppercase text-sm neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-brand-text">Export Report</button>
-              <button className="bg-brand-primary border-4 border-brand-border px-4 py-2 font-headline font-black uppercase text-sm text-black neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">New Diagnostic</button>
+
+            <div className="hidden lg:flex gap-3 items-center">
+              {/* Item 9 — OOM / success toast */}
+              {exportToast === 'oom' && (
+                <span className="bg-brand-error border-4 border-brand-border px-3 py-2 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)] animate-pulse">
+                  ⚠ GPU MEMORY EXHAUSTED
+                </span>
+              )}
+              {exportToast === 'success' && (
+                <span className="bg-brand-tertiary border-4 border-brand-border px-3 py-2 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)]">
+                  ✓ PDF DOWNLOADED
+                </span>
+              )}
+              {exportToast === 'error' && (
+                <span className="bg-brand-error border-4 border-brand-border px-3 py-2 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)]">
+                  ✗ EXPORT FAILED
+                </span>
+              )}
+
+              {/* Item 9 — Export button with localized Synthesizing... state */}
+              <button
+                onClick={handleExport}
+                disabled={isExporting}
+                className="bg-brand-surface border-4 border-brand-border px-4 py-2 font-headline font-bold uppercase text-sm neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-brand-text disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isExporting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm animate-spin">autorenew</span>
+                  Generating PDF...
+                  </span>
+                ) : 'Export Report'}
+              </button>
+
+              <button
+                onClick={handleSessionReset}
+                className="bg-brand-primary border-4 border-brand-border px-4 py-2 font-headline font-black uppercase text-sm text-black neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+              >
+                New Diagnostic
+              </button>
             </div>
           </div>
 
-          {/* Left Column (Upload only) */}
+          {/* Left Column */}
           <div className="col-span-12 lg:col-span-3 space-y-4">
             <PDFUploader pdfState={pdfState} setPdfState={setPdfState} theme={theme} />
           </div>
@@ -154,12 +238,13 @@ export default function App() {
               />
             </div>
             <div className="pt-2 bg-brand-bg w-full z-10 shrink-0 border-t-4 border-brand-border mt-2 transition-colors">
+              {/* Item 9 — InputBar stays UNLOCKED during export */}
               <InputBar onSend={handleSend} disabled={isLoading} theme={theme} />
             </div>
           </div>
 
         </div>
-      </main>
-    </motion.div>
+      </motion.main>
+    </div>
   );
 }

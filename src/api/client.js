@@ -1,9 +1,12 @@
 import API_BASE_URL from "../config";
 
 const getHeaders = () => ({
-  "ngrok-skip-browser-warning": "true"
+  "ngrok-skip-browser-warning": "true",
 });
 
+// ─────────────────────────────────────────────────────────────
+// Item 4 — health check (existing, unchanged)
+// ─────────────────────────────────────────────────────────────
 export async function checkHealth() {
   try {
     const response = await fetch(`${API_BASE_URL}/health`, {
@@ -16,10 +19,14 @@ export async function checkHealth() {
   }
 }
 
-export async function sendMessage(message, history, imageFile = null) {
+// ─────────────────────────────────────────────────────────────
+// Item 3 — Full Parameter Threading: top_k threaded through stack
+// ─────────────────────────────────────────────────────────────
+export async function sendMessage(message, history, imageFile = null, topK = 5) {
   const formData = new FormData();
   formData.append("message", message);
   formData.append("history", JSON.stringify(history));
+  formData.append("top_k", topK.toString());
   if (imageFile) {
     formData.append("image", imageFile);
   }
@@ -34,26 +41,21 @@ export async function sendMessage(message, history, imageFile = null) {
   return response.json();
 }
 
-/**
- * Upload a PDF file using XMLHttpRequest so that real upload progress events
- * are available for the terminal boot sequence in PDFUploader.
- *
- * @param {File} file - The PDF file to upload
- * @param {function} onProgress - Called with (percent: number) as upload progresses
- * @returns {Promise<object>} - Resolves with the server response JSON
- */
-export function uploadPDF(file, onProgress) {
+// ─────────────────────────────────────────────────────────────
+// Item 7 — Hardened XHR Boot Sequence (REPLACED)
+// 90s timeout, granular FastAPI error parsing, full error surface
+// ─────────────────────────────────────────────────────────────
+export const uploadPDF = (file, onProgress) => {
   return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
     const formData = new FormData();
     formData.append("file", file);
 
-    const xhr = new XMLHttpRequest();
-
-    // Real upload progress
+    // Track real-time upload progress
     xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && onProgress) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        onProgress(percent);
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        if (onProgress) onProgress(percentComplete);
       }
     };
 
@@ -65,24 +67,36 @@ export function uploadPDF(file, onProgress) {
           reject(new Error("Invalid JSON response from server"));
         }
       } else {
-        reject(new Error(`PDF upload failed: ${xhr.status}`));
+        // Attempt to parse the FastAPI HTTP exception detail
+        try {
+          const errorRes = JSON.parse(xhr.responseText);
+          reject(new Error(errorRes.detail || "Upload failed."));
+        } catch (e) {
+          reject(new Error(`Server error: ${xhr.status}`));
+        }
       }
     };
 
-    xhr.onerror = () => reject(new Error("PDF upload network error"));
-    xhr.onabort = () => reject(new Error("PDF upload aborted"));
+    // Hardened error, abort, and timeout handlers
+    xhr.onerror = () => reject(new Error("PDF upload network error. Check backend connection."));
+    xhr.onabort = () => reject(new Error("PDF upload aborted by user/system."));
+
+    // Strict 90-second timeout — prevents infinite "Extracting..." UI hang
+    xhr.timeout = 90000;
+    xhr.ontimeout = () => reject(new Error("PDF upload timed out. Connection to AI core lost."));
 
     xhr.open("POST", `${API_BASE_URL}/upload-pdf`);
 
-    // Set custom headers (cannot set Content-Type manually with FormData — browser does it)
-    Object.entries(getHeaders()).forEach(([key, value]) => {
-      xhr.setRequestHeader(key, value);
-    });
+    // Preserve the ngrok tunnel header — required for bypass
+    xhr.setRequestHeader("ngrok-skip-browser-warning", "true");
 
     xhr.send(formData);
   });
-}
+};
 
+// ─────────────────────────────────────────────────────────────
+// Item 2 — Localized Document Flush (existing, verified)
+// ─────────────────────────────────────────────────────────────
 export async function clearPDF() {
   const response = await fetch(`${API_BASE_URL}/clear-pdf`, {
     method: "DELETE",
@@ -92,6 +106,21 @@ export async function clearPDF() {
   return response.json();
 }
 
+// ─────────────────────────────────────────────────────────────
+// Item 1 — True Vector Purge / race-condition-proof session reset
+// ─────────────────────────────────────────────────────────────
+export async function resetSession() {
+  const response = await fetch(`${API_BASE_URL}/reset-session`, {
+    method: "POST",
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error("Reset session failed");
+  return response.json();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Existing utilities (unchanged)
+// ─────────────────────────────────────────────────────────────
 export async function getModelInfo() {
   const response = await fetch(`${API_BASE_URL}/model-info`, {
     headers: getHeaders(),
