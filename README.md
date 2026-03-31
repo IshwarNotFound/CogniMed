@@ -30,17 +30,17 @@ CogniMed.AI is a modern clinical diagnostic interface that connects a React fron
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| 🧠 **AI Chat Interface** | Real-time clinical Q&A powered by MedGemma 4B-IT (4-bit NF4 quantized). Supports multi-turn conversation history. |
-| 📄 **PDF RAG Pipeline** | Upload any clinical document (discharge summaries, lab reports, research papers). The AI answers questions grounded in the document with cited page references. |
-| 📊 **Clinical Report Export** | Generates a formatted PDF report of the entire diagnostic session entirely in the browser using jsPDF — no backend call required. |
-| 📡 **Live System Telemetry** | Real-time GPU device name, VRAM allocation, system RAM, quantization status, and inference speed (tokens/sec) polled every 10 seconds. |
-| ⚠️ **Emergency Override** | Hard-purges the ChromaDB vector index and resets the full session state from the sidebar with animated visual feedback. |
-| 🌗 **Dark / Light Mode** | Semantic CSS variable theming with smooth scale-compress-and-expand transition physics on the main content area. |
-| ✍️ **Markdown Rendering** | Full GitHub Flavoured Markdown (GFM) support with typewriter animation on every AI response. |
-| 🖼️ **Image Attachment** | Send images alongside text messages to the multimodal MedGemma endpoint. |
-| 💡 **Diagnostic Suggestions** | Seed query cards are surfaced when the chat is empty, pulled from the `/suggestions` backend endpoint. |
+| Feature                       | Description                                                                                                                                       |
+|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| 🧠 **AI Chat Interface**      | Real-time clinical Q&A powered by MedGemma 4B-IT (4-bit NF4 quantized). Supports multi-turn conversation history.                                 |
+| 📄 **PDF RAG Pipeline**       | Upload any clinical document (discharge summaries, lab reports, research papers). The AI answers questions grounded in the document with cited page references. |
+| 📊 **Clinical Report Export** | Generates a formatted PDF report of the entire diagnostic session entirely in the browser using jsPDF — no backend call required.                 |
+| 📡 **Live System Telemetry**  | Real-time GPU device name, VRAM allocation, system RAM, quantization status, and inference speed (tokens/sec) polled every 10 seconds.            |
+| ⚠️ **Emergency Override**     | Hard-purges the ChromaDB vector index and resets the full session state from the sidebar with animated visual feedback.                           |
+| 🌗 **Dark / Light Mode**      | Semantic CSS variable theming with smooth scale-compress-and-expand transition physics on the main content area.                                  |
+| ✍️ **Markdown Rendering**     | Full GitHub Flavoured Markdown (GFM) support with typewriter animation on every AI response.                                                      |
+| 🖼️ **Image Attachment**      | Send images alongside text messages to the multimodal MedGemma endpoint.                                                                          |
+| 💡 **Diagnostic Suggestions** | Seed query cards are surfaced when the chat is empty, pulled from the `/suggestions` backend endpoint.                                            |
 
 ---
 
@@ -48,54 +48,54 @@ CogniMed.AI is a modern clinical diagnostic interface that connects a React fron
 
 ### Frontend
 
-| Layer | Technology | Version |
-|---|---|---|
-| Framework | React | 19 |
-| Build Tool | Vite | 8 |
-| Styling | Tailwind CSS | v4 |
-| Animations | Framer Motion | 12 |
-| PDF Export | jsPDF + jspdf-autotable | 4 / 5 |
-| Markdown | react-markdown + remark-gfm | 10 / 4 |
-| Icons | Lucide React + Google Material Symbols | — |
-| Fonts | Space Grotesk, Inter, Manrope | — |
+| Layer       | Technology                               | Version |
+|-------------|------------------------------------------|---------|
+| Framework   | React                                    | 19      |
+| Build Tool  | Vite                                     | 8       |
+| Styling     | Tailwind CSS                             | v4      |
+| Animations  | Framer Motion                            | 12      |
+| PDF Export  | jsPDF + jspdf-autotable                  | 4 / 5   |
+| Markdown    | react-markdown + remark-gfm              | 10 / 4  |
+| Icons       | Lucide React + Google Material Symbols   | —       |
+| Fonts       | Space Grotesk, Inter, Manrope            | —       |
 
 ### Backend (Google Colab)
 
-| Component | Technology |
-|---|---|
-| Server | FastAPI |
-| AI Model | MedGemma 4B-IT (4-bit NF4, via `bitsandbytes`) |
-| Vector Store | ChromaDB |
-| Embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
-| PDF Parsing | PyMuPDF / pdfplumber |
-| Tunnel | ngrok |
+| Component    | Technology                                     |
+|--------------|------------------------------------------------|
+| Server       | FastAPI                                        |
+| AI Model     | MedGemma 4B-IT (4-bit NF4, via `bitsandbytes`) |
+| Vector Store | ChromaDB                                       |
+| Embeddings   | `sentence-transformers/all-MiniLM-L6-v2`       |
+| PDF Parsing  | PyMuPDF / pdfplumber                           |
+| Tunnel       | ngrok                                          |
 
 ---
 
 ## Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                      Browser (React)                        │
-│                                                             │
-│  ┌──────────┐  ┌─────────────┐  ┌────────────────────────┐ │
-│  │  Header  │  │   Sidebar   │  │      Main Content       │ │
-│  │ (status, │  │ (telemetry, │  │  ┌──────┐ ┌──────────┐ │ │
-│  │  theme)  │  │  override)  │  │  │ PDF  │ │   Chat   │ │ │
-│  │  └──────────┘  └─────────────┘  │  │Upload│ │  Window  │ │ │
-│                                  │  └──────┘ └──────────┘ │ │
-│                                  └────────────────────────┘ │
-└────────────────────┬────────────────────────────────────────┘
-                     │ HTTPS (ngrok tunnel)
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Google Colab — FastAPI Backend                 │
-│                                                             │
-│  /health        /model-info     /suggestions                │
-│  /chat ──────► MedGemma 4B-IT (4-bit NF4)                  │
-│  /upload-pdf ► ChromaDB + MiniLM-L6-v2 embeddings          │
-│  /clear-pdf     /reset-session                              │
-└─────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+|                      Browser (React)                        |
+|                                                             |
+|  +----------+  +-------------+  +------------------------+  |
+|  |  Header  |  |   Sidebar   |  |      Main Content      |  |
+|  | (status, |  | (telemetry, |  |  +------+ +----------+ |  |
+|  |  theme)  |  |  override)  |  |  | PDF  | |   Chat   | |  |
+|  +----------+  +-------------+  |  |Upload| |  Window  | |  |
+|                                 |  +------+ +----------+ |  |
+|                                 +------------------------+  |
++--------------------+----------------------------------------+
+                     | HTTPS (ngrok tunnel)
+                     V
++-------------------------------------------------------------+
+|              Google Colab — FastAPI Backend                 |
+|                                                             |
+|  /health        /model-info     /suggestions                |
+|  /chat -------> MedGemma 4B-IT (4-bit NF4)                  |
+|  /upload-pdf -> ChromaDB + MiniLM-L6-v2 embeddings          |
+|  /clear-pdf     /reset-session                              |
++-------------------------------------------------------------+
 ```
 
 The frontend polls `/health` every 30 seconds and `/model-info` every 10 seconds to keep the status indicators and telemetry panel up to date. All chat requests and PDF uploads flow through the ngrok tunnel to the Colab backend.
@@ -154,20 +154,20 @@ Create a `.env` file in the project root:
 VITE_API_BASE_URL=https://your-ngrok-url.ngrok-free.app
 ```
 
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_API_BASE_URL` | ✅ Yes | The base URL of the FastAPI backend. Must point to the active ngrok tunnel. |
+| Variable            | Required | Description                                                                   |
+|---------------------|----------|-------------------------------------------------------------------------------|
+| `VITE_API_BASE_URL` | ✅ Yes    | The base URL of the FastAPI backend. Must point to the active ngrok tunnel.   |
 
 ---
 
 ## Available Scripts
 
-| Script | Command | Description |
-|---|---|---|
-| Dev server | `npm run dev` | Starts Vite HMR dev server on port 5174 |
-| Production build | `npm run build` | Outputs optimised static files to `dist/` |
-| Preview build | `npm run preview` | Locally preview the production build |
-| Lint | `npm run lint` | Run ESLint across the entire codebase |
+| Script           | Command           | Description                                    |
+|------------------|-------------------|------------------------------------------------|
+| Dev server       | `npm run dev`     | Starts Vite HMR dev server on port 5174        |
+| Production build | `npm run build`   | Outputs optimised static files to `dist/`      |
+| Preview build    | `npm run preview` | Locally preview the production build           |
+| Lint             | `npm run lint`    | Run ESLint across the entire codebase          |
 
 ---
 
@@ -175,15 +175,15 @@ VITE_API_BASE_URL=https://your-ngrok-url.ngrok-free.app
 
 The FastAPI backend exposes the following endpoints. All requests require the `ngrok-skip-browser-warning: true` header (already handled by the frontend API client).
 
-| Method | Endpoint | Description | Request Body |
-|---|---|---|---|
-| `GET` | `/health` | Server + PDF status, polling heartbeat | — |
-| `GET` | `/model-info` | GPU device name, VRAM usage, quantization, platform | — |
-| `GET` | `/suggestions` | Seed diagnostic query suggestions for the empty-chat UI | — |
-| `POST` | `/chat` | MedGemma inference with optional RAG context | `FormData`: `message`, `history` (JSON), `top_k`, `image?` |
-| `POST` | `/upload-pdf` | Ingest a clinical document into ChromaDB | `FormData`: `file` (PDF) |
-| `DELETE` | `/clear-pdf` | Flush the vector index for the current document | — |
-| `POST` | `/reset-session` | Full session + vector purge (Emergency Override) | — |
+| Method   | Endpoint         | Description                                                | Request Body                                               |
+|----------|------------------|------------------------------------------------------------|------------------------------------------------------------|
+| `GET`    | `/health`        | Server + PDF status, polling heartbeat                     | —                                                          |
+| `GET`    | `/model-info`    | GPU device name, VRAM usage, quantization, platform        | —                                                          |
+| `GET`    | `/suggestions`   | Seed diagnostic query suggestions for the empty-chat UI    | —                                                          |
+| `POST`   | `/chat`          | MedGemma inference with optional RAG context               | `FormData`: `message`, `history` (JSON), `top_k`, `image?` |
+| `POST`   | `/upload-pdf`    | Ingest a clinical document into ChromaDB                   | `FormData`: `file` (PDF)                                   |
+| `DELETE` | `/clear-pdf`     | Flush the vector index for the current document            | —                                                          |
+| `POST`   | `/reset-session` | Full session + vector purge (Emergency Override)           | —                                                          |
 
 ### Example: `/chat` response
 
@@ -258,23 +258,23 @@ CogniMed.AI uses a **Neo-Brutalist** design language built on semantic CSS custo
 
 ### Colour Tokens
 
-| Token | Dark Mode | Light Mode | Usage |
-|---|---|---|---|
-| `--brand-bg` | `#0d0d0d` | `#f5f0e8` | Page background |
-| `--brand-surface` | `#1a1a1a` | `#fffdf7` | Card / sidebar surface |
-| `--brand-primary` | `#f5c842` | `#d4a017` | Accent (buttons, highlights) |
-| `--brand-secondary` | `#ff4d4d` | `#cc2200` | Danger / Emergency Override |
-| `--brand-tertiary` | `#4dff91` | `#00a844` | Success states |
-| `--brand-border` | `#ffffff` | `#1a1a1a` | All borders and box shadows |
-| `--brand-error` | `#ff4d4d` | `#cc2200` | Error states |
+| Token                | Dark Mode | Light Mode | Usage                          |
+|----------------------|-----------|------------|--------------------------------|
+| `--brand-bg`         | `#0d0d0d` | `#f5f0e8`  | Page background                |
+| `--brand-surface`    | `#1a1a1a` | `#fffdf7`  | Card / sidebar surface         |
+| `--brand-primary`    | `#f5c842` | `#d4a017`  | Accent (buttons, highlights)   |
+| `--brand-secondary`  | `#ff4d4d` | `#cc2200`  | Danger / Emergency Override    |
+| `--brand-tertiary`   | `#4dff91` | `#00a844`  | Success states                 |
+| `--brand-border`     | `#ffffff` | `#1a1a1a`  | All borders and box shadows    |
+| `--brand-error`      | `#ff4d4d` | `#cc2200`  | Error states                   |
 
 ### Typography
 
-| Role | Font | Weight |
-|---|---|---|
+| Role                | Font          | Weight      |
+|---------------------|---------------|-------------|
 | Headlines / buttons | Space Grotesk | 900 (Black) |
-| Body / labels | Inter | 400–700 |
-| Data / telemetry | Manrope | 700 |
+| Body / labels       | Inter         | 400–700     |
+| Data / telemetry    | Manrope       | 700         |
 
 ### Shadow Convention
 
@@ -335,14 +335,14 @@ Click **Export Report** in the top-right corner of the main panel. This:
 
 ## Troubleshooting
 
-| Symptom | Likely Cause | Fix |
-|---|---|---|
-| Status indicator shows **OFFLINE** | ngrok URL has changed or Colab session has expired | Restart the Colab notebook, copy the new ngrok URL, update `.env`, restart `npm run dev` |
-| PDF upload times out after 90 seconds | Large file or slow Colab GPU | Try a smaller PDF or upgrade to a Colab Pro GPU runtime |
-| `⚠️ Connection Error` in chat | Backend is unreachable | Check the backend is running in Colab and the ngrok tunnel is active |
-| Telemetry shows `INITIALIZING...` forever | `/model-info` endpoint unreachable | Confirm the Colab backend has fully loaded the model (wait for the "Model loaded" log line) |
-| PDF export opens blank tab | Chat history is empty | Send at least one message before exporting |
-| `GPU MEMORY EXHAUSTED` toast | Colab GPU ran out of VRAM | Restart the Colab runtime and reload the model |
+| Symptom                                | Likely Cause                                         | Fix                                                                                             |
+|----------------------------------------|------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| Status indicator shows **OFFLINE**     | ngrok URL has changed or Colab session has expired   | Restart the Colab notebook, copy the new ngrok URL, update `.env`, restart `npm run dev`        |
+| PDF upload times out after 90 seconds  | Large file or slow Colab GPU                         | Try a smaller PDF or upgrade to a Colab Pro GPU runtime                                         |
+| `⚠️ Connection Error` in chat          | Backend is unreachable                               | Check the backend is running in Colab and the ngrok tunnel is active                            |
+| Telemetry shows `INITIALIZING...`      | `/model-info` endpoint unreachable                   | Confirm the Colab backend has fully loaded the model (wait for the "Model loaded" log line)     |
+| PDF export opens blank tab             | Chat history is empty                                | Send at least one message before exporting                                                      |
+| `GPU MEMORY EXHAUSTED` toast           | Colab GPU ran out of VRAM                            | Restart the Colab runtime and reload the model                                                  |
 
 ---
 
