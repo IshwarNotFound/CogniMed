@@ -1,16 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-bg: var(--brand-bg);
-  --color-brand-surface: var(--brand-surface);
-  --color-brand-surface-high: var(--brand-surface-high);
-  --color-brand-text: var(--brand-text);
-  --color-brand-text-muted: var(--brand-text-muted);
-  --color-brand-border: var(--brand-border);
-  --color-brand-primary: var(--brand-primary);
-  --color-brand-secondary: var(--brand-secondary);
-  --color-brand-tertiary: var(--brand-tertiary);
-  --color-brand-error: var(--brand-error);
+  /* LIGHT TRANSLATION (Based on Stitch 'Clinical Pulse Neo') */
+  --color-brand-bg: #f6f6f6;
+  --color-brand-surface: #ffffff;
+  --color-brand-surface-high: #e7e8e8;
+  --color-brand-text: #2d2f2f;
+  --color-brand-text-muted: #5a5c5c;
+  --color-brand-border: #2d2f2f;
+  --color-brand-primary: #00eefc;
+  --color-brand-secondary: #a400a4;
+  --color-brand-tertiary: #cafd00;
+  --color-brand-error: #fb5151;
+  --color-brand-warning: #f59e0b;
+  --color-brand-text-faint: #9a9c9c;
+  --color-brand-text-inverse: #ffffff;
 
   --font-sans: "Manrope", system-ui, sans-serif;
   --font-headline: "Space Grotesk", sans-serif;
@@ -18,34 +22,22 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  /* LIGHT TRANSLATION (Based on Stitch 'Clinical Pulse Neo') */
-  --brand-bg: #f6f6f6;
-  --brand-surface: #ffffff;
-  --brand-surface-high: #e7e8e8;
-  --brand-text: #2d2f2f;
-  --brand-text-muted: #5a5c5c;
-  --brand-border: #2d2f2f; /* Heavy black/dark-slate for borders in light mode */
-  
-  --brand-primary: #00eefc; /* Cyan */
-  --brand-secondary: #a400a4; /* Magenta */
-  --brand-tertiary: #cafd00; /* Lime */
-  --brand-error: #fb5151;
-}
-
 .dark {
   /* DARK TRANSLATION (Based on Stitch 'The Neon Monolith') */
-  --brand-bg: #0D0E0F;
-  --brand-surface: #181A1B;
-  --brand-surface-high: #1E2021;
-  --brand-text: #F9F9F9;
-  --brand-text-muted: #757576;
-  --brand-border: #000000; /* Pure black for structural borders in dark mode */
+  --color-brand-bg: #0D0E0F;
+  --color-brand-surface: #181A1B;
+  --color-brand-surface-high: #1E2021;
+  --color-brand-text: #F9F9F9;
+  --color-brand-text-muted: #757576;
+  --color-brand-text-faint: #4a4b4c;
+  --color-brand-text-inverse: #0D0E0F;
+  --color-brand-border: #000000;
   
-  --brand-primary: #00F0FF; /* High-intensity Cyan */
-  --brand-secondary: #FF00FF; /* High-intensity Magenta */
-  --brand-tertiary: #CCFF00; /* High-intensity Lime */
-  --brand-error: #ff716c;
+  --color-brand-primary: #00F0FF;
+  --color-brand-secondary: #FF00FF;
+  --color-brand-tertiary: #CCFF00;
+  --color-brand-error: #ff716c;
+  --color-brand-warning: #fbbf24;
 }
 
 @layer base {
@@ -61,6 +53,25 @@
   }
 }
 
+/* ── ITEM #1 — Tabular Numerals + Slashed Zero ────────────────────────── */
+.font-mono,
+.tabular,
+[data-numeric],
+.case-id,
+.system-stats,
+.token-count,
+.inference-time {
+  font-variant-numeric: tabular-nums slashed-zero oldstyle-nums;
+}
+
+/* ── ITEM #5 — Neo-Brutalist Focus Ring ──────────────────────────────── */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand-bg), 0 0 0 4px var(--brand-text);
+  border-radius: 2px;
+}
+
+/* ── ITEM #15 — Custom Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 10px;
   background-color: var(--brand-bg);
@@ -93,4 +104,58 @@
     font-family: 'Material Symbols Outlined';
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
+}
+
+/* ── ITEM #11 — Analysis Complete Pulse ──────────────────────────────── */
+@keyframes completePulse {
+  0%   { border-color: var(--brand-primary); }
+  50%  { border-color: var(--brand-text); }
+  100% { border-color: var(--brand-primary); }
+}
+.complete-flash {
+  animation: completePulse 0.3s ease 1;
+}
+
+/* ── ITEM #34 — Critical Blink (hard digital, not sinusoidal) ────────── */
+@keyframes criticalBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.dot-critical {
+  animation: criticalBlink 1s steps(2) infinite;
+}
+
+/* ── ITEM #22 — Accept Pulse (PDF drop zone) ─────────────────────────── */
+@keyframes acceptPulse {
+  0%   { box-shadow: 0 0 0 0 var(--brand-primary); }
+  100% { box-shadow: 0 0 0 8px transparent; }
+}
+.accept-pulse {
+  animation: acceptPulse 0.4s ease 1;
+}
+
+/* ── ITEM #37 — Grain Texture (Header + Sidebar ONLY) ────────────────── */
+.grain-overlay {
+  position: relative;
+}
+.grain-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  mix-blend-mode: multiply;
+}
+
+/* ── Badge Typography ────────────────────────────────────────────────── */
+.badge-security,
+.badge-priority,
+.status-chip {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
