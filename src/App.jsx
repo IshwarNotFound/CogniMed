@@ -1,7 +1,7 @@
 // Items #11, #19, #20, #23, #28, #34 — App.jsx
 // Uses the ORIGINAL working grid layout structure — do NOT restructure to flex
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
@@ -41,6 +41,7 @@ export default function App() {
   const [pdfState, setPdfState] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const { toasts, add: addToast, dismiss: dismissToast } = useToasts();
 
   const [contextError, setContextError] = useState(null);
@@ -172,83 +173,77 @@ export default function App() {
         setTheme={handleThemeChange}
         sessionData={{ lastAnalysisTime, exchangeCount, totalTokens, caseId: CASE_ID }}
       />
-      <Sidebar onSessionReset={handleSessionReset} />
+      <Sidebar onSessionReset={handleSessionReset} messageCount={exchangeCount} pdfActive={!!pdfState} />
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
 
       <main
-        className="absolute left-0 md:left-72 top-16 right-0 bottom-0 p-4 overflow-hidden z-10"
+        className="absolute left-0 md:left-72 top-16 right-0 bottom-0 overflow-hidden z-10 flex flex-col"
       >
         <motion.div
           animate={{ scale: isTransitioning ? 0.98 : 1 }}
           transition={{ type: "tween", duration: 0.1 }}
           style={{ transformOrigin: "center top" }}
-          className="h-full w-full"
+          className="h-full w-full flex"
         >
-        <div className="max-w-7xl mx-auto grid grid-cols-12 gap-4 h-full">
-
-          {/* Header Area — col-span-12 */}
-          <div className="col-span-12 flex justify-between items-center mb-2 border-b-4 border-brand-border pb-3">
-            <div>
-              <motion.h1
-                className="text-3xl font-black font-headline uppercase leading-none mb-1 text-brand-text"
-                initial={{ clipPath: 'inset(0 100% 0 0)' }}
-                animate={{ clipPath: 'inset(0 0% 0 0)' }}
-                transition={{ ...STAMP, delay: 0 }}
-              >
-                Patient Analysis
-              </motion.h1>
-              <div className="flex gap-3 items-center mt-1">
-                <span className="bg-brand-surface-high border-2 border-brand-border px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-text font-mono case-id">
-                  <CipherText value={`CASE-${CASE_ID}`} />
-                </span>
-                <PriorityBadge level="high" label="PRIORITY: HIGH ALPHA" />
-              </div>
-            </div>
-
-            <div className="hidden lg:flex gap-3 items-center">
-              {/* Anchored error banners */}
-              {contextError === 'model_offline' && (
-                <span className="bg-brand-error border-4 border-brand-border px-3 py-2 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)] flex items-center gap-2">
-                  ⚠ MEDGEMMA OFFLINE
-                  <button onClick={() => setContextError(null)} className="text-black/60 hover:text-black">✕</button>
-                </span>
-              )}
-              {contextError === 'context_overflow' && (
-                <span className="bg-brand-warning border-4 border-brand-border px-3 py-2 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)] flex items-center gap-2">
-                  ⚠ CONTEXT FULL
-                  <button onClick={() => { setContextError(null); handleSessionReset(); }} className="text-black/60 hover:text-black underline">New Session</button>
-                </span>
-              )}
-
-              <button
-                onClick={handleExport}
-                disabled={isExporting || history.length === 0}
-                className="bg-brand-surface border-4 border-brand-border px-4 py-2 font-headline font-bold uppercase text-sm neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-brand-text disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isExporting ? (
-                  <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm animate-spin">autorenew</span>
-                    Generating PDF...
-                  </span>
-                ) : 'Export Report'}
-              </button>
-              <button
-                onClick={handleSessionReset}
-                className="bg-brand-primary border-4 border-brand-border px-4 py-2 font-headline font-black uppercase text-sm text-black neo-brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
-              >
-                New Diagnostic
-              </button>
-            </div>
-          </div>
-
-          {/* Left Column — PDF Uploader */}
-          <div className="col-span-12 lg:col-span-3 space-y-4">
+          {/* ── Left Column — PDF Uploader, self-contained ──────────────── */}
+          <div className="w-72 shrink-0 border-r-4 border-brand-border flex flex-col bg-brand-surface overflow-hidden">
             <PDFUploader pdfState={pdfState} setPdfState={setPdfState} theme={theme} />
           </div>
 
-          {/* Right Column — Chat feed + Input */}
-          <div className="col-span-12 lg:col-span-9 flex flex-col relative h-[calc(100vh-14rem)] border-l-4 border-brand-border pl-6 transition-colors">
-            <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar pb-4">
+          {/* ── Right Column — own header + chat + input bar ─────────────── */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+
+            <div className="shrink-0 flex justify-between items-center px-6 py-4 border-b-4 border-brand-border bg-brand-bg relative overflow-hidden hazard-pattern">
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-1">
+                  <motion.h1
+                    className="text-2xl font-black font-headline uppercase leading-none text-brand-text"
+                    initial={{ clipPath: 'inset(0 100% 0 0)' }}
+                    animate={{ clipPath: 'inset(0 0% 0 0)' }}
+                    transition={{ ...STAMP, delay: 0 }}
+                  >
+                    Patient Analysis
+                  </motion.h1>
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 bg-brand-primary/10 border border-brand-primary/30 rounded-sm">
+                    <span className="w-1.5 h-1.5 bg-brand-primary rounded-full dot-critical" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter text-brand-primary">CONSOLE ACTIVE</span>
+                  </span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <span className="bg-brand-surface-high border-2 border-brand-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-brand-text font-mono case-id hazard-border">
+                    <CipherText value={`CASE-${CASE_ID}`} />
+                  </span>
+                  <PriorityBadge level="high" label="PRIORITY: HIGH ALPHA" />
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-center relative z-10">
+                {contextError === 'model_offline' && (
+                  <span className="bg-brand-error border-4 border-brand-border px-3 py-2 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)] flex items-center gap-2">
+                    ⚠ MEDGEMMA OFFLINE
+                    <button onClick={() => setContextError(null)} className="text-black/60 hover:text-black">✕</button>
+                  </span>
+                )}
+                <button
+                  onClick={handleExport}
+                  disabled={isExporting || history.length === 0}
+                  className="bg-brand-surface border-4 border-brand-border px-5 py-2.5 font-headline font-black uppercase text-xs shadow-[4px_4px_0_0_var(--brand-border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--brand-border)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-brand-text disabled:opacity-60 disabled:cursor-not-allowed group flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm group-hover:rotate-12 transition-transform">ios_share</span>
+                  {isExporting ? 'Generating...' : 'Export Report'}
+                </button>
+                <button
+                  onClick={() => history.length > 0 ? setShowResetModal(true) : handleSessionReset()}
+                  className="bg-brand-primary border-4 border-brand-border px-5 py-2.5 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--brand-border)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm">refresh</span>
+                  New Diagnostic
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable chat area */}
+            <div className="flex-1 overflow-y-auto px-6 pt-5 custom-scrollbar flex flex-col">
               <ChatWindow
                 history={history}
                 isLoading={isLoading}
@@ -257,9 +252,11 @@ export default function App() {
                 pdfActive={!!pdfState}
               />
             </div>
-            <div className="pt-2 bg-brand-bg w-full z-10 shrink-0 border-t-4 border-brand-border mt-2 transition-colors">
+
+            {/* Pinned Input Bar */}
+            <div className="shrink-0 px-6 py-3 border-t-4 border-brand-border bg-brand-bg transition-colors">
               {pdfWarning && !pdfState && (
-                <div className="mb-1 px-2 py-1 flex items-center gap-2">
+                <div className="mb-2 flex items-center gap-2">
                   <span className="text-brand-warning text-[10px] font-mono font-bold uppercase tracking-widest">
                     ⚠ No document in context — analysis quality will be reduced
                   </span>
@@ -268,11 +265,80 @@ export default function App() {
               )}
               <InputBar onSend={handleSend} disabled={isLoading} theme={theme} />
             </div>
+
           </div>
 
-        </div>
         </motion.div>
       </main>
+
+      {/* ── New Diagnostic Confirmation Modal ──────────────────────────────── */}
+      <AnimatePresence>
+        {showResetModal && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+          >
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/70" onClick={() => setShowResetModal(false)} />
+
+            {/* Modal */}
+            <motion.div
+              className="relative bg-brand-surface border-4 border-brand-border shadow-[8px_8px_0_0_var(--brand-border)] w-full max-w-md mx-4 overflow-hidden"
+              initial={{ scale: 0.92, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 20 }}
+              transition={{ type: 'spring', stiffness: 600, damping: 35 }}
+            >
+              {/* Hazard accent */}
+              <div className="h-1 w-full bg-brand-warning" />
+
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-brand-warning/10 border-2 border-brand-warning p-2">
+                    <span className="material-symbols-outlined text-brand-warning text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black font-headline uppercase leading-none text-brand-text">Session Termination</h2>
+                    <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">IRREVERSIBLE OPERATION</span>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="bg-brand-bg border-2 border-brand-border p-4 mb-6">
+                  <p className="text-sm font-bold text-brand-text leading-relaxed mb-3">
+                    CogniMed operates on a <span className="text-brand-primary">zero-persistence architecture</span>. No diagnostic session data is stored on any server.
+                  </p>
+                  <p className="text-sm font-bold text-brand-text-muted leading-relaxed">
+                    Initiating a new diagnostic will <span className="text-brand-error">permanently purge</span> the current session — all conversation history, analysis context, and loaded vector caches will be destroyed.
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowResetModal(false)}
+                    className="flex-1 bg-brand-bg border-4 border-brand-border py-3 font-headline font-black uppercase text-xs text-brand-text shadow-[4px_4px_0_0_var(--brand-border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--brand-border)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                    Abort
+                  </button>
+                  <button
+                    onClick={() => { setShowResetModal(false); handleSessionReset(); }}
+                    className="flex-1 bg-brand-warning border-4 border-brand-border py-3 font-headline font-black uppercase text-xs text-black shadow-[4px_4px_0_0_var(--brand-border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--brand-border)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    Acknowledge
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

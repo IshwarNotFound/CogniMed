@@ -40,7 +40,7 @@ export default function SuggestionCards({ onSelect, theme }) {
 
   return (
     <motion.div
-      className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4"
+      className="grid grid-cols-1 md:grid-cols-3 gap-4"
       variants={{
         hidden: {},
         show: { transition: { staggerChildren: stagger } },
@@ -58,17 +58,33 @@ export default function SuggestionCards({ onSelect, theme }) {
             boxShadow: '6px 6px 0px 0px var(--brand-primary)',
           }}
           onClick={() => onSelect(card.query || card.title)}
-          className="group bg-brand-surface border-2 border-brand-border p-5 text-left shadow-[4px_4px_0px_0px_var(--brand-border)] flex flex-col"
+          className="group relative overflow-hidden bg-brand-surface-high border-4 border-brand-border border-l-8 border-l-brand-primary p-6 text-left shadow-[4px_4px_0px_0px_var(--brand-border)] flex flex-col gap-3"
         >
-          <div className="text-brand-primary mb-3">
-            <span className="material-symbols-outlined">{card.icon || "analytics"}</span>
+          {/* Faint Background Grid */}
+          <div className="absolute inset-0 opacity-5 pointer-events-none"
+            style={{ backgroundImage: 'linear-gradient(var(--color-brand-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-brand-border) 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
+
+          <div className="text-brand-primary relative z-10">
+            <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+              {card.icon || 'analytics'}
+            </span>
           </div>
-          <p className="text-xs font-black uppercase tracking-widest text-brand-text group-hover:text-brand-primary transition-colors">
+          <p className="text-sm font-black uppercase tracking-widest text-brand-text group-hover:text-brand-primary transition-colors leading-tight relative z-10">
             {card.title}
           </p>
-          <p className="text-[10px] text-brand-text-muted mt-2 font-medium">
+          <p className="text-xs text-brand-text-muted font-medium leading-relaxed relative z-10">
             {card.description}
           </p>
+          <div className="flex items-end justify-between mt-auto pt-2 relative z-10">
+            <div className="text-brand-text-faint text-[10px] font-mono uppercase tracking-widest flex items-center gap-1 group-hover:text-brand-primary transition-colors">
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>arrow_forward</span>
+              Run Analysis
+            </div>
+            {/* Hex Data Trace */}
+            <div className="text-[8px] font-mono font-black text-brand-text-faint opacity-30 tracking-tighter">
+              0x{Math.floor(Math.random() * 16777215).toString(16).toUpperCase().padStart(6, '0')}
+            </div>
+          </div>
         </motion.button>
       ))}
     </motion.div>

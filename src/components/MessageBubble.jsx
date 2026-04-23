@@ -1,15 +1,19 @@
-// Items 8, 11, 14 — MessageBubble
-// 8: MarkdownRenderer replaces raw text (XSS-safe AST parsing)
-// 11: Asymmetric visual hierarchy — heavy brand-secondary left border on user bubbles
-// 14: TypewriterText applied only to the latest AI message (non-blocking)
-import { useState, useEffect, useCallback } from 'react';
+// Items #2, #6, #11, #14, #25, #27 — MessageBubble
+// #2:  max-w-[72ch] on MarkdownRenderer
+// #6:  Entry animation: x:-60 → y:12 (rise from below, not lateral slam)
+// #11: Analysis Complete border flash + isHistorical schema
+// #14: Asymmetric bubble hierarchy — border-r-4 on user, border-l-4 on AI
+// #25: Active exchange left-border anchor data-is-latest
+// #27: CopyButton — icon morphs Copy→Check (no toast)
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
-import { getSpring, DATA_REVEAL, FLASH } from '../animations/physics';
+import { SNAP, COUNTER } from '../animations/physics';
 import MarkdownRenderer from './MarkdownRenderer';
-import TypewriterText from './TypewriterText';
+import CopyButton from './CopyButton';
 
 /**
  * NumberTicker — isolated per-message number counter.
+ * Item #9: duration changed 1.2→0.55s via COUNTER physics.
  */
 function NumberTicker({ value, decimals = 0, suffix = '' }) {
   const motionVal = useMotionValue(0);
@@ -23,16 +27,15 @@ function NumberTicker({ value, decimals = 0, suffix = '' }) {
   }, [motionVal, decimals]);
 
   useEffect(() => {
-    // Item 6 — NaN guard: coerce bad values before animating
+    // NaN guard: coerce bad values before animating
     const safeValue = isNaN(Number(value)) ? 0 : Number(value);
-    const controls = animate(motionVal, safeValue, {
-      duration: 1.2,
-      ease: [0.16, 1, 0.3, 1],
-    });
+    // Item #9 — Duration 0.55s (was 1.2s). Users read final value in periphery
+    // before animation finishes at 1.2s — creates cognitive dissonance.
+    const controls = animate(motionVal, safeValue, COUNTER);
     return controls.stop;
   }, [value, motionVal]);
 
-  return <span>{display}{suffix}</span>;
+  return <span className="tabular">{display}{suffix}</span>;
 }
 
 /** Citation row stagger variants */
@@ -42,28 +45,75 @@ const citationVariants = {
 };
 
 /**
+ * MessageBubble
  * @param {object} message
+ * @param {boolean} message.isHistorical — true if loaded from storage (prevents batch flash)
  * @param {string} theme
- * @param {boolean} isLatest — if true, AI content renders via TypewriterText
+ * @param {boolean} isLatest — last AI message in active session
+ * @param {boolean} isActiveExchange — last user/AI exchange pair
  */
-export default function MessageBubble({ message, theme, isLatest = false }) {
+export default function MessageBubble({
+  message,
+  theme,
+  isLatest = false,
+  isActiveExchange = false,
+}) {
   const isUser = message.role === 'user';
   const [showCitations, setShowCitations] = useState(false);
-  // Once TypewriterText finishes, switch to MarkdownRenderer so ** marks are parsed
-  const [typewriterDone, setTypewriterDone] = useState(!isLatest);
-  const handleTypewriterComplete = useCallback(() => setTypewriterDone(true), []);
-  const spring = getSpring(theme);
+  const [justCompleted, setJustCompleted] = useState(false);
+
+  // ─── Item #11 — Analysis Complete Border Flash ─────────────────────────────
+  // isHistorical flag prevents batch-flashing all historical messages on load.
+  useEffect(() => {
+    if (message.status === 'complete' && !message.isHistorical) {
+      setJustCompleted(true);
+      const t = setTimeout(() => setJustCompleted(false), 600);
+      return () => clearTimeout(t);
+    }
+  }, [message.status, message.isHistorical]);
+
+  // ─── Item #6 — Entry Animation ──────────────────────────────────────────────
+  // Latest AI message gets a clip-path reveal (content "declassifies" from the left accent bar).
+  // Historical and older messages use a simple fade-rise to avoid replay noise.
+  const isNewAiResponse = !isUser && !message.isHistorical && isActiveExchange;
+
+  const messageVariants = {
+    initial: isNewAiResponse
+      ? { opacity: 0, clipPath: 'inset(0 100% 0 0)' }
+      : { opacity: 0, y: 12 },
+    animate: isNewAiResponse
+      ? {
+          opacity: 1,
+          clipPath: 'inset(0 0% 0 0)',
+          transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0.08 },
+        }
+      : {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.16, ease: [0.22, 1, 0.36, 1] },
+        },
+  };
 
   if (isUser) {
     return (
+      // Item #6 — layout="position" parent animates existing messages' repositioning
       <motion.div
+        layout="position"
+        transition={SNAP}
         className="flex justify-end ml-12 mb-6"
-        initial={{ opacity: 0, x: 60 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={spring}
+        variants={messageVariants}
+        initial="initial"
+        animate="animate"
       >
-        {/* Item 11 — Asymmetric Visual Hierarchy: heavy brand-secondary left accent */}
-        <div className="bg-brand-surface-high border-4 border-brand-border border-l-[6px] border-l-brand-secondary p-6 shadow-[4px_4px_0_0_var(--brand-border)] max-w-2xl relative">
+        {/* ─── Item #14 — Asymmetric Bubble Hierarchy ────────────────────────────
+            User: border-r-4 border-brand-secondary (RIGHT side anchor)
+            Removed old border-l-[6px] which was wrong side for right-aligned bubble */}
+        <div
+          className={`bg-brand-surface-high border-4 border-brand-border border-r-4 border-r-brand-secondary p-6 shadow-[4px_4px_0_0_var(--brand-border)] max-w-2xl relative ${
+            isActiveExchange ? 'border-l-[2px] border-l-brand-primary/20' : ''
+          }`}
+          data-is-latest={isActiveExchange ? 'true' : undefined}
+        >
           {message.imagePreview && (
             <div className="mb-4 bg-zinc-100 border-2 border-brand-border p-2">
               <img src={message.imagePreview} alt="Attached" className="max-w-[200px] h-auto border-2 border-brand-border" />
@@ -77,70 +127,45 @@ export default function MessageBubble({ message, theme, isLatest = false }) {
   }
 
   return (
+    // Item #6 — layout="position" parent for smooth repositioning of existing messages
     <motion.div
+      layout="position"
+      transition={SNAP}
       className="flex flex-col items-start gap-3 justify-start mr-12 mb-6"
-      initial={{ opacity: 0, x: -60 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={spring}
+      variants={messageVariants}
+      initial="initial"
+      animate="animate"
     >
-      <div className="bg-brand-surface border-4 border-brand-border p-8 shadow-[8px_8px_0_0_var(--brand-border)] max-w-3xl relative overflow-hidden">
-        {/* AI Accent Bar — Light theme only */}
-        {theme === 'light' && (
-          <motion.div
-            className="absolute top-0 left-0 w-2 bg-brand-primary"
-            initial={{ height: '0%' }}
-            animate={{ height: '100%' }}
-            transition={DATA_REVEAL}
-          />
-        )}
-        {/* Dark theme — static accent bar */}
-        {theme !== 'light' && (
-          <div className="absolute top-0 left-0 w-2 h-full bg-brand-primary" />
-        )}
+      {/* ─── Item #14 — AI: border-l-4 border-brand-primary (LEFT side anchor) ──
+          Item #11: complete-flash class does pulse from brand-primary→text→primary  */}
+      <div
+        className={`bg-brand-surface border-4 border-brand-border border-l-4 border-l-brand-primary p-8 shadow-[8px_8px_0_0_var(--brand-border)] max-w-3xl relative overflow-hidden ${
+          justCompleted ? 'complete-flash' : ''
+        } ${isActiveExchange ? 'message-bubble' : ''}`}
+        data-is-latest={isActiveExchange ? 'true' : undefined}
+      >
+        {/* AI Accent Bar */}
+        <div className="absolute top-0 left-0 w-2 h-full bg-brand-primary" />
 
-        <div className="mb-6 flex justify-between items-center">
-          <span className="bg-brand-bg border-2 border-brand-border text-brand-text px-3 py-1 text-xs font-black uppercase font-headline shadow-[2px_2px_0_0_var(--brand-border)]">COGNIMED AI Core</span>
-          <span className="text-brand-primary material-symbols-outlined">verified</span>
+        <div className="mb-6 flex justify-between items-center gap-2">
+          <span className="bg-brand-bg border-2 border-brand-border text-brand-text px-3 py-1 text-xs font-black uppercase font-headline shadow-[2px_2px_0_0_var(--brand-border)]">
+            COGNIMED AI Core
+          </span>
+          <div className="flex items-center gap-2">
+            {/* Item #27 — CopyButton: icon morphs Copy→Check, no toast text */}
+            <CopyButton content={message.content} />
+            <span className="text-brand-primary material-symbols-outlined">verified</span>
+          </div>
         </div>
 
-        {/* Item 8 — Secure AST Markdown Rendering (no dangerouslySetInnerHTML) */}
-        {/* Item 14 — TypewriterText only on the latest AI message.
-            Once typewriterDone=true (animation complete), switches to MarkdownRenderer
-            so '**bold**' markers are always properly parsed — never raw text. */}
-        {theme === 'dark' ? (
-          <motion.div
-            initial={{ backgroundColor: 'var(--brand-primary)' }}
-            animate={{ backgroundColor: 'transparent' }}
-            transition={FLASH}
-            className="mb-6"
-          >
-            {isLatest && !typewriterDone ? (
-              <div className="font-bold text-brand-text leading-relaxed text-[17px]">
-                <TypewriterText
-                  text={message.content}
-                  speedMs={8}
-                  onComplete={handleTypewriterComplete}
-                />
-              </div>
-            ) : (
-              <MarkdownRenderer content={message.content} />
-            )}
-          </motion.div>
-        ) : (
-          <div className="mb-6">
-            {isLatest && !typewriterDone ? (
-              <div className="font-bold text-brand-text leading-relaxed text-[17px]">
-                <TypewriterText
-                  text={message.content}
-                  speedMs={8}
-                  onComplete={handleTypewriterComplete}
-                />
-              </div>
-            ) : (
-              <MarkdownRenderer content={message.content} />
-            )}
+        {/* ─── Item #2 — max-w-[72ch] on MarkdownRenderer wrapper ───────────────
+            65–72 chars is typographic golden ratio for readable prose.
+            Current max-w-3xl (768px) allows 90–100 chars — too wide.              */}
+        <div className="mb-6">
+          <div className="prose max-w-[72ch]">
+            <MarkdownRenderer content={message.content} />
           </div>
-        )}
+        </div>
 
         {/* Citations Accordion */}
         {message.citations && message.citations.length > 0 && (
@@ -159,7 +184,7 @@ export default function MessageBubble({ message, theme, isLatest = false }) {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   style={{ overflow: 'hidden' }}
                 >
                   <div className="pt-4 border-4 border-brand-border overflow-hidden">
@@ -185,7 +210,9 @@ export default function MessageBubble({ message, theme, isLatest = false }) {
                             variants={citationVariants}
                             className="hover:bg-brand-surface-high transition-colors"
                           >
-                            <td className="p-3 font-bold text-sm min-w-[100px] align-top border-r-2 border-brand-border text-brand-primary">PG: {cit.page}</td>
+                            <td className="p-3 font-bold text-sm min-w-[100px] align-top border-r-2 border-brand-border text-brand-primary tabular">
+                              PG: {cit.page}
+                            </td>
                             <td className="p-3 font-bold text-sm italic text-brand-text">"{cit.text}"</td>
                           </motion.tr>
                         ))}
@@ -203,25 +230,25 @@ export default function MessageBubble({ message, theme, isLatest = false }) {
       {(message.inferenceTime || message.tokensPerSecond) && (
         <div className="flex gap-6 px-2 mt-2">
           {message.inferenceTime && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 inference-time">
               <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Inference Time:</span>
-              <span className="text-[10px] font-black text-brand-primary font-mono">
+              <span className="text-[10px] font-black text-brand-primary font-mono tabular">
                 <NumberTicker value={message.inferenceTime} />ms
               </span>
             </div>
           )}
           {message.tokensPerSecond && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 token-count">
               <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Tokens/sec:</span>
-              <span className="text-[10px] font-black text-brand-secondary font-mono">
+              <span className="text-[10px] font-black text-brand-secondary font-mono tabular">
                 <NumberTicker value={message.tokensPerSecond} decimals={1} />
               </span>
             </div>
           )}
           {message.tokensGenerated && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 token-count">
               <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Tokens:</span>
-              <span className="text-[10px] font-black text-brand-tertiary font-mono">
+              <span className="text-[10px] font-black text-brand-tertiary font-mono tabular">
                 <NumberTicker value={message.tokensGenerated} />
               </span>
             </div>
